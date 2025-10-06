@@ -1,0 +1,109 @@
+#ifndef _RADIOLIB_EX_LORAWAN_CONFIG_H
+#define _RADIOLIB_EX_LORAWAN_CONFIG_H
+
+// Must include RadioLib core first, then the LoRaWAN protocol headers so
+// types like LoRaWANBand_t, LoRaWANNode and the RADIOLIB_* macros are defined.
+#include <RadioLib.h>
+
+// Heltec V3 common mapping for SX1262: NSS, DIO1, RST, BUSY
+// Use this unless you explicitly wired different pins.
+SX1262 radio = new Module(10, 2, 3, 9);
+
+// how often to send an uplink - consider legal & FUP constraints - see notes
+const uint32_t uplinkIntervalSeconds = 1UL * 60UL;    // minutes x seconds
+
+// Replace with your JoinEUI (AppEUI) - 8 bytes, MSB as ULL literal
+#define RADIOLIB_LORAWAN_JOIN_EUI  0x16ED77AD6ABFE51DULL
+
+// Device EUI (8 bytes)
+#ifndef RADIOLIB_LORAWAN_DEV_EUI
+#define RADIOLIB_LORAWAN_DEV_EUI   0x49351A037F5327E8ULL
+#endif
+
+// AppKey (16 bytes) - provide as comma-separated byte list (MSB first)
+#ifndef RADIOLIB_LORAWAN_APP_KEY
+#define RADIOLIB_LORAWAN_APP_KEY   0x55,0x26,0x0C,0xF5, 0xE9,0x32,0xF9,0xA1, 0x4A,0x39,0x4D,0x1D, 0xF4,0x2F,0xED,0x24
+#endif
+
+// NwkKey (16 bytes) - needed for LoRaWAN 1.1 and sometimes RadioLib internal operations
+#ifndef RADIOLIB_LORAWAN_NWK_KEY
+#define RADIOLIB_LORAWAN_NWK_KEY   0xB7,0xCC,0xFD,0x99, 0x41,0x11,0x0F,0x8E, 0x1E,0x21,0x3E,0x45, 0x2D,0xD4,0x95,0x6C
+#endif
+
+// Region selection — set to EU868 for most of Europe
+const LoRaWANBand_t Region = EU868;
+const uint8_t subBand = 0;  // US915-specific, leave 0 for EU868
+
+// ============================================================================
+// Internal glue — keep these, RadioLib example expects them
+
+uint64_t joinEUI =   RADIOLIB_LORAWAN_JOIN_EUI;
+uint64_t devEUI  =   RADIOLIB_LORAWAN_DEV_EUI;
+uint8_t appKey[] = { RADIOLIB_LORAWAN_APP_KEY };
+uint8_t nwkKey[] = { RADIOLIB_LORAWAN_NWK_KEY };
+
+// Create LoRaWAN node instance used by RadioLib examples
+LoRaWANNode node(&radio, &Region, subBand);
+
+// Human-readable status helper (keeps the example logs friendly)
+String stateDecode(const int16_t result) {
+  switch (result) {
+  case RADIOLIB_ERR_NONE:
+    return "ERR_NONE";
+  case RADIOLIB_ERR_CHIP_NOT_FOUND:
+    return "ERR_CHIP_NOT_FOUND";
+  case RADIOLIB_ERR_PACKET_TOO_LONG:
+    return "ERR_PACKET_TOO_LONG";
+  case RADIOLIB_ERR_RX_TIMEOUT:
+    return "ERR_RX_TIMEOUT";
+  case RADIOLIB_ERR_CRC_MISMATCH:
+    return "ERR_CRC_MISMATCH";
+  case RADIOLIB_ERR_INVALID_BANDWIDTH:
+    return "ERR_INVALID_BANDWIDTH";
+  case RADIOLIB_ERR_INVALID_SPREADING_FACTOR:
+    return "ERR_INVALID_SPREADING_FACTOR";
+  case RADIOLIB_ERR_INVALID_CODING_RATE:
+    return "ERR_INVALID_CODING_RATE";
+  case RADIOLIB_ERR_INVALID_FREQUENCY:
+    return "ERR_INVALID_FREQUENCY";
+  case RADIOLIB_ERR_INVALID_OUTPUT_POWER:
+    return "ERR_INVALID_OUTPUT_POWER";
+  case RADIOLIB_ERR_NO_JOIN_ACCEPT:
+    return "RADIOLIB_ERR_NO_JOIN_ACCEPT";
+  case RADIOLIB_LORAWAN_SESSION_RESTORED:
+    return "RADIOLIB_LORAWAN_SESSION_RESTORED";
+  case RADIOLIB_LORAWAN_NEW_SESSION:
+    return "RADIOLIB_LORAWAN_NEW_SESSION";
+  case RADIOLIB_ERR_NONCES_DISCARDED:
+    return "RADIOLIB_ERR_NONCES_DISCARDED";
+  case RADIOLIB_ERR_SESSION_DISCARDED:
+    return "RADIOLIB_ERR_SESSION_DISCARDED";
+  default:
+    return "See https://jgromes.github.io/RadioLib/group__status__codes.html";
+  }
+}
+
+// helper function to display any issues
+void debug(bool failed, const __FlashStringHelper* message, int state, bool halt) {
+  if(failed) {
+    Serial.print(message);
+    Serial.print(" - ");
+    Serial.print(stateDecode(state));
+    Serial.print(" (");
+    Serial.print(state);
+    Serial.println(")");
+    while(halt) { delay(1); }
+  }
+}
+
+// helper function to display a byte array (hex)
+void arrayDump(uint8_t *buffer, uint16_t len) {
+  for(uint16_t c = 0; c < len; c++) {
+    uint8_t b = buffer[c];
+    if(b < 0x10) { Serial.print('0'); }
+    Serial.print(b, HEX);
+  }
+  Serial.println();
+}
+
+#endif

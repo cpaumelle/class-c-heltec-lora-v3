@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mv:*)",
+      "Bash(pio run:*)",
+      "Bash(platformio run:*)",
+      "Bash(python3:*)",
+      "Read(//Users/cpaumelle/.platformio/penv/bin/**)",
+      "Bash(~/.platformio/penv/bin/platformio run -e heltec_wifi_lora_32_V3)",
+      "Bash(~/.platformio/penv/bin/pio device list)",
+      "Bash(~/.platformio/penv/bin/pio device monitor -p /dev/cu.usbserial-0001 -b 115200)",
+      "Bash(screen:*)",
+      "Bash(stty:*)",
+      "Bash(timeout:*)",
+      "Read(//dev/**)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(~/.platformio/penv/bin/platformio run -e heltec_wifi_lora_32_V3 -t upload)",
+      "WebFetch(domain:jgromes.github.io)",
+      "Bash(pip3 install:*)",
+      "Read(//Users/cpaumelle/.ssh/**)",
+      "Bash(ssh:*)",
+      "Bash(/usr/libexec/ApplicationFirewall/socketfilterfw:*)",
+      "Bash(nc:*)",
+      "Bash(route:*)",
+      "Bash(arp:*)",
+      "Bash(scutil:*)",
+      "Bash(pfctl:*)",
+      "Bash(sudo pfctl:*)",
+      "Bash(traceroute:*)",
+      "Bash(ping:*)",
+      "Bash(scp:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
