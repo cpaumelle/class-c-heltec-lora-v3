@@ -1,12 +1,21 @@
-# Heltec WiFi LoRa 32 V3 - Class C Room Status Display
+# Heltec WiFi LoRa 32 V3 - Class C LoRaWAN Display
 
 LoRaWAN Class C implementation for Heltec WiFi LoRa 32 V3 (ESP32-S3 + SX1262) with persistent OLED status display using RadioLib.
+
+## Firmware Versions
+
+This repository contains two firmware variants:
+
+| Version | File | Use Case | Display |
+|---------|------|----------|---------|
+| **Single Space** | `LoRaWAN_OLED_SingleSpace.ino` | Individual parking space status | `AVAILABLE` / `OCCUPIED` / `RESERVED` |
+| **Parking Zone** | `LoRaWAN_OLED_ParkingZone.ino` | Zone availability counter | `PL. LIBRES :` + number (e.g., `24`) |
 
 ## Features
 
 ✅ **LoRaWAN 1.0.3A OTAA** - Over-the-Air Activation with session persistence
 ✅ **Class C Operation** - Always listening for downlinks (instant updates!)
-✅ **Persistent Status Display** - Shows AVAILABLE/OCCUPIED/RESERVED until next update
+✅ **Persistent Status Display** - Shows status until next update
 ✅ **Hourly Keep-Alive Uplinks** - Minimal network traffic (not frequent uplinks)
 ✅ **Session Recovery** - NVS + RTC RAM for seamless reboots
 ✅ **EU868 Region** - Configurable for other regions
@@ -125,7 +134,12 @@ pio device monitor -p /dev/ttyUSB0 -b 115200
 1. Navigate to device (DevEUI: `70b3d57ed0067001`)
 2. Go to **Queue** tab
 3. Set **FPort**: `1`
-4. Enter **Hex Payload**:
+4. Enter **Hex Payload** (see format below)
+5. Click **Enqueue**
+6. Status displays **immediately** (within ~1-5 seconds)
+7. Status **persists** on screen until next downlink
+
+### Single Space Version (LoRaWAN_OLED_SingleSpace.ino)
 
 | Status | Hex Payload | Display |
 |--------|-------------|---------|
@@ -133,9 +147,17 @@ pio device monitor -p /dev/ttyUSB0 -b 115200
 | **Occupied** | `02` | `OCCUPIED` |
 | **Reserved** | `03` | `RESERVED` |
 
-5. Click **Enqueue**
-6. Status displays **immediately** (within ~1-5 seconds)
-7. Status **persists** on screen until next downlink
+### Parking Zone Version (LoRaWAN_OLED_ParkingZone.ino)
+
+Send ASCII digits as hex bytes:
+
+| Spaces | Hex Payload | Display |
+|--------|-------------|---------|
+| **5** | `35` | `PL. LIBRES : 5` |
+| **24** | `3234` | `PL. LIBRES : 24` |
+| **156** | `313536` | `PL. LIBRES : 156` |
+
+**ASCII Reference:** `0`=0x30, `1`=0x31, `2`=0x32, ... `9`=0x39
 
 ### Important Notes
 
@@ -173,13 +195,29 @@ const LoRaWANBand_t Region = EU868;  // Change to US915, AU915, etc.
 ## File Structure
 
 ```
-heltec-lorawan/
-├── platformio.ini              # PlatformIO configuration
+class-c-heltec-lora-v3/
+├── platformio.ini                    # PlatformIO configuration
+├── firmware.bin                      # Pre-built firmware
 ├── src/
-│   ├── LoRaWAN_OLED.ino       # Main Class C application
-│   ├── config.h                # LoRaWAN credentials & radio config
-│   └── LoRaWAN_OLED_ClassA_backup.ino  # Original Class A version (backup)
-└── README.md                   # This file
+│   ├── LoRaWAN_OLED_SingleSpace.ino  # Single space status display
+│   ├── LoRaWAN_OLED_ParkingZone.ino  # Zone availability counter
+│   └── config.h                      # LoRaWAN credentials & radio config
+├── examples/                         # Example code
+└── README.md                         # This file
+```
+
+### Building a Specific Version
+
+To build the Parking Zone version, rename/copy the desired `.ino` file:
+
+```bash
+# For Parking Zone version
+cp src/LoRaWAN_OLED_ParkingZone.ino src/main.cpp
+pio run -e heltec_wifi_lora_32_V3 -t upload
+
+# For Single Space version
+cp src/LoRaWAN_OLED_SingleSpace.ino src/main.cpp
+pio run -e heltec_wifi_lora_32_V3 -t upload
 ```
 
 ---
@@ -330,15 +368,20 @@ For issues:
 
 ## Changelog
 
-### v2.0 - Class C Implementation (Current)
+### v3.0 - Parking Zone Display (Current)
+- ✅ New Parking Zone firmware variant
+- ✅ Displays available space count with large font
+- ✅ French header "PL. LIBRES :"
+- ✅ ASCII number payload support
+
+### v2.0 - Class C Implementation
 - ✅ Class C operation with continuous RX
 - ✅ Persistent status display (no timeout)
 - ✅ Hourly keep-alive uplinks
 - ✅ Immediate downlink reception
 - ✅ Activation uplink after Class C switch
 
-### v1.0 - Class A Implementation (Backup)
+### v1.0 - Class A Implementation
 - ✅ Class A with 30-second uplinks
 - ✅ 5-second status display timeout
 - ✅ Downlinks only in RX windows
-- ✅ See `src/LoRaWAN_OLED_ClassA_backup.ino`
