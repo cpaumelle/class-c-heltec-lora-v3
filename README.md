@@ -38,11 +38,25 @@ This repository contains two **example implementations** for parking management:
 
 ## Hardware
 
+### Primary Platform: Heltec WiFi LoRa 32 V3
+
 **Board:** Heltec WiFi LoRa 32 V3
 - **MCU:** ESP32-S3FN8 (240MHz, 320KB RAM, 8MB Flash)
 - **Radio:** Semtech SX1262 LoRa transceiver
 - **Display:** 0.96" OLED (128x64, SSD1306)
 - **Antenna:** External antenna via IPEX/U.FL connector (**REQUIRED!**)
+
+### Alternative Platform: RAK3172 + ILI9341 TFT
+
+**⚡ NEW!** A version for RAK3172 with larger color TFT display is also available.
+
+**Module:** RAK3172 (STM32WLE5 + Integrated LoRa)
+- **MCU:** STM32WLE5JC (ARM Cortex-M4, 48MHz)
+- **Radio:** Integrated SX126x-compatible transceiver
+- **Display:** ILI9341 TFT (320x240 pixels, 16-bit color)
+- **Code:** See `src-rak3172/` directory
+
+See [src-rak3172/README.md](src-rak3172/README.md) for RAK3172-specific documentation.
 
 ### Pin Configuration
 
