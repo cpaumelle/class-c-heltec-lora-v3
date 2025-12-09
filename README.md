@@ -168,6 +168,58 @@ Send ASCII digits as hex bytes:
 
 ---
 
+## Payload Protocol
+
+### Uplink Format
+
+The device sends periodic keep-alive uplinks every 60 minutes.
+
+**FPort**: 1
+**Payload**: 3 bytes
+
+| Byte | Description | Example |
+|------|-------------|---------|
+| 0 | Counter (high byte) | `0x00` |
+| 1 | Counter (low byte) | `0x05` (counter=5) |
+| 2 | Last status byte | `0x02` (last received status) |
+
+**Byte 2 Contents**:
+- **Single Space**: Last received status code (0x01/0x02/0x03)
+- **Zone Counter**: First ASCII character of last number (e.g., '2' from "24")
+
+**Example Sequence**:
+```
+Uplink #1:  00 00 00  (counter=0, no downlink yet)
+Downlink:   02        (set to OCCUPIED)
+Uplink #2:  00 01 02  (counter=1, last status=0x02)
+Uplink #3:  00 02 02  (counter=2, last status=0x02)
+```
+
+**Counter Behavior**:
+- Starts at 0 after device boot
+- Increments by 1 after each uplink
+- 16-bit value (0-65535), then rolls over to 0
+
+### Initial Activation Uplink
+
+Immediately after OTAA join, the device sends a special 2-byte payload:
+
+**FPort**: 1
+**Payload**: `FF C3`
+
+This signals to the network server that the device is now in Class C mode and ready for immediate downlinks.
+
+### Full Technical Specification
+
+For complete payload protocol details, see **[PAYLOAD_PROTOCOL.md](PAYLOAD_PROTOCOL.md)** which includes:
+- Detailed downlink/uplink formats
+- Integration with Smart Parking Platform
+- Payload size limits
+- Error handling
+- Testing procedures
+
+---
+
 ## Configuration
 
 ### Change Uplink Interval
@@ -368,7 +420,13 @@ For issues:
 
 ## Changelog
 
-### v3.0 - Parking Zone Display (Current)
+### v3.1 - OLED Display Fix (2025-12-09, commit 95daeb6)
+- ✅ Fixed OLED display initialization in ParkingZone variant
+- ✅ Corrected SDA/SCL pin order in SSD1306Wire constructor
+- ✅ Display now works correctly when powered via USB
+- ✅ No payload protocol changes (fully backward compatible)
+
+### v3.0 - Parking Zone Display
 - ✅ New Parking Zone firmware variant
 - ✅ Displays available space count with large font
 - ✅ French header "PL. LIBRES :"
