@@ -9,12 +9,23 @@
 
 ## Overview
 
-This document describes the LoRaWAN payload protocol used by Heltec WiFi LoRa 32 V3 devices in the Smart Parking Platform. The firmware supports two variants:
+This document describes the **generic LoRaWAN payload protocol** for Heltec WiFi LoRa 32 V3 Class C display devices. While the reference implementation demonstrates parking space monitoring, the protocol is **application-agnostic** and can be used for:
 
-1. **Single Space Display** (`LoRaWAN_OLED_SingleSpace.ino`) - Shows status of individual parking spaces
-2. **Zone Counter Display** (`LoRaWAN_OLED_ParkingZone.ino`) - Shows available parking count for zones/floors
+- 🏢 Room/desk occupancy indicators
+- 📦 Inventory level counters
+- 🚪 Access status displays
+- 👥 Queue length displays
+- 🎯 Any binary state indicator (2-8 states)
+- 🔢 Any numeric counter (0-9999)
+
+The firmware provides two **protocol patterns**:
+
+1. **Binary State Display** (`LoRaWAN_OLED_SingleSpace.ino`) - Maps 1-byte payload to different display states
+2. **Numeric Counter Display** (`LoRaWAN_OLED_ParkingZone.ino`) - Displays ASCII-encoded numbers with customizable labels
 
 Both variants operate in **LoRaWAN Class C** mode (always listening for downlinks).
+
+**Example Implementation:** The Smart Parking Platform uses these protocols for parking management, but this is just one possible application. The payload protocol itself is generic.
 
 ---
 
@@ -28,12 +39,16 @@ Both variants operate in **LoRaWAN Class C** mode (always listening for downlink
 
 ## Downlink Format (Server → Device)
 
-### Single Space Display
+### Binary State Display
 
-**Purpose**: Update parking space status indicator
+**Purpose**: Update display to show one of several predefined states
 **FPort**: 1
 **Payload Length**: 1 byte
-**Format**: Single status code byte
+**Format**: Single status code byte (interpreted by firmware)
+
+**Protocol:** Send any byte value (0x00-0xFF), firmware maps to display text via switch/case.
+
+**Example Implementation: Parking Space Monitoring**
 
 | Hex Payload | Decimal | Display Text | Use Case |
 |-------------|---------|--------------|----------|
@@ -41,6 +56,18 @@ Both variants operate in **LoRaWAN Class C** mode (always listening for downlink
 | `02` | 2 | OCCUPIED | Space is occupied |
 | `03` | 3 | RESERVED | Space is reserved |
 | Other | - | UNKNOWN | Invalid/error state |
+
+**Example Implementation: Meeting Room Status**
+
+| Hex Payload | Decimal | Display Text | Use Case |
+|-------------|---------|--------------|----------|
+| `01` | 1 | FREE | Room available |
+| `02` | 2 | IN USE | Meeting in progress |
+| `03` | 3 | BOOKED | Reserved for later |
+| `04` | 4 | CLEANING | Maintenance |
+| Other | - | OFFLINE | Error state |
+
+**Customization:** Modify the `displayRoomStatus()` function in firmware to change text for each byte value. The LoRaWAN protocol remains unchanged.
 
 **Examples**:
 
@@ -66,12 +93,16 @@ switch(downlinkData[0]) {
 
 ---
 
-### Zone Counter Display
+### Numeric Counter Display
 
-**Purpose**: Update zone availability counter
+**Purpose**: Update numeric display (counts, levels, quantities)
 **FPort**: 1
 **Payload Length**: 1-4 bytes (variable, ASCII encoded)
 **Format**: ASCII digit characters
+
+**Protocol:** Send ASCII representation of number as hex bytes (e.g., "24" → `0x32 0x34`)
+
+**Example Implementation: Parking Availability**
 
 | Hex Payload | ASCII Interpretation | Display Output |
 |-------------|---------------------|----------------|
@@ -79,6 +110,23 @@ switch(downlinkData[0]) {
 | `32 34` | "24" | PL. LIBRES : 24 |
 | `31 35 36` | "156" | PL. LIBRES : 156 |
 | `30` | "0" | PL. LIBRES : 0 |
+
+**Example Implementation: Stock Level**
+
+| Hex Payload | ASCII Interpretation | Display Output |
+|-------------|---------------------|----------------|
+| `31 30 30` | "100" | STOCK: 100 units |
+| `35` | "5" | STOCK: 5 units |
+| `30` | "0" | STOCK: 0 units |
+
+**Example Implementation: Queue Length**
+
+| Hex Payload | ASCII Interpretation | Display Output |
+|-------------|---------------------|----------------|
+| `37` | "7" | WAITING: 7 people |
+| `32 33` | "23" | WAITING: 23 people |
+
+**Customization:** Modify the `displayCarParkStatus()` function to change label text and formatting. The ASCII-to-number conversion is automatic.
 
 **Encoding Rules**:
 - Each byte represents one ASCII digit character

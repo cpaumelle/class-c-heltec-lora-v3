@@ -1,15 +1,28 @@
 # Heltec WiFi LoRa 32 V3 - Class C LoRaWAN Display
 
-LoRaWAN Class C implementation for Heltec WiFi LoRa 32 V3 (ESP32-S3 + SX1262) with persistent OLED status display using RadioLib.
+**Generic LoRaWAN Class C display framework** for Heltec WiFi LoRa 32 V3 (ESP32-S3 + SX1262) with persistent OLED status display using RadioLib.
 
-## Firmware Versions
+## Overview
 
-This repository contains two firmware variants:
+This firmware provides a **reusable framework** for building **instant-update remote displays** using LoRaWAN Class C. The included implementations demonstrate parking space monitoring, but the code is generic and can be adapted for:
 
-| Version | File | Use Case | Display |
-|---------|------|----------|---------|
-| **Single Space** | `LoRaWAN_OLED_SingleSpace.ino` | Individual parking space status | `AVAILABLE` / `OCCUPIED` / `RESERVED` |
-| **Parking Zone** | `LoRaWAN_OLED_ParkingZone.ino` | Zone availability counter | `PL. LIBRES :` + number (e.g., `24`) |
+- 🏢 Room occupancy indicators (Available/In Use/Reserved)
+- 📦 Inventory counters (Stock levels, available units)
+- 🚪 Access status displays (Open/Closed/Locked)
+- 👥 People counters (Queue length, capacity remaining)
+- 🎯 Any binary state indicator
+- 🔢 Any numeric counter display
+
+## Firmware Variants
+
+This repository contains two **example implementations** for parking management:
+
+| Variant | File | Protocol | Example Display | Adaptable For |
+|---------|------|----------|-----------------|---------------|
+| **Binary State** | `LoRaWAN_OLED_SingleSpace.ino` | 1 byte → different text | `AVAILABLE` / `OCCUPIED` / `RESERVED` | Any 2-8 state indicator |
+| **Numeric Counter** | `LoRaWAN_OLED_ParkingZone.ino` | ASCII digits → number display | `PL. LIBRES : 24` | Any counter (0-9999) |
+
+**The parking use case is just one example.** See [Customizing for Your Use Case](#customizing-for-your-use-case) to adapt for other applications.
 
 ## Features
 
@@ -134,12 +147,16 @@ pio device monitor -p /dev/ttyUSB0 -b 115200
 1. Navigate to device (DevEUI: `70b3d57ed0067001`)
 2. Go to **Queue** tab
 3. Set **FPort**: `1`
-4. Enter **Hex Payload** (see format below)
+4. Enter **Hex Payload** (see examples below)
 5. Click **Enqueue**
 6. Status displays **immediately** (within ~1-5 seconds)
 7. Status **persists** on screen until next downlink
 
-### Single Space Version (LoRaWAN_OLED_SingleSpace.ino)
+### Payload Examples
+
+#### Binary State Variant (LoRaWAN_OLED_SingleSpace.ino)
+
+**Example: Parking Space Monitoring**
 
 | Status | Hex Payload | Display |
 |--------|-------------|---------|
@@ -147,7 +164,17 @@ pio device monitor -p /dev/ttyUSB0 -b 115200
 | **Occupied** | `02` | `OCCUPIED` |
 | **Reserved** | `03` | `RESERVED` |
 
-### Parking Zone Version (LoRaWAN_OLED_ParkingZone.ino)
+**Example: Meeting Room Monitoring**
+```cpp
+// Customize display text in firmware:
+case 1: display = "FREE"; break;
+case 2: display = "IN USE"; break;
+case 3: display = "BOOKED"; break;
+```
+
+#### Numeric Counter Variant (LoRaWAN_OLED_ParkingZone.ino)
+
+**Example: Parking Availability Counter**
 
 Send ASCII digits as hex bytes:
 
@@ -240,6 +267,128 @@ Edit `src/config.h`:
 
 ```cpp
 const LoRaWANBand_t Region = EU868;  // Change to US915, AU915, etc.
+```
+
+---
+
+## Customizing for Your Use Case
+
+The firmware is designed to be easily adapted for different applications. Here's how:
+
+### Binary State Display (LoRaWAN_OLED_SingleSpace.ino)
+
+**What you can customize:**
+1. **Display text** for each state
+2. **Number of states** (2-8 states supported with 1 byte)
+3. **Display layout** (font size, positioning, icons)
+
+**Example: Meeting Room Indicator**
+
+```cpp
+// Original (Parking):
+void displayRoomStatus(uint8_t statusByte) {
+  switch(statusByte) {
+    case 1: displayLargeText("AVAILABLE"); break;
+    case 2: displayLargeText("OCCUPIED"); break;
+    case 3: displayLargeText("RESERVED"); break;
+    default: displayLargeText("UNKNOWN"); break;
+  }
+}
+
+// Customized (Meeting Room):
+void displayRoomStatus(uint8_t statusByte) {
+  switch(statusByte) {
+    case 1: displayLargeText("FREE"); break;
+    case 2: displayLargeText("IN USE"); break;
+    case 3: displayLargeText("BOOKED"); break;
+    case 4: displayLargeText("CLEANING"); break;
+    default: displayLargeText("OFFLINE"); break;
+  }
+}
+```
+
+**Example: Access Control**
+```cpp
+void displayRoomStatus(uint8_t statusByte) {
+  switch(statusByte) {
+    case 1: displayLargeText("OPEN"); break;
+    case 2: displayLargeText("CLOSED"); break;
+    case 3: displayLargeText("LOCKED"); break;
+    default: displayLargeText("ERROR"); break;
+  }
+}
+```
+
+### Numeric Counter Display (LoRaWAN_OLED_ParkingZone.ino)
+
+**What you can customize:**
+1. **Header text** ("PL. LIBRES :" → your label)
+2. **Number format** (plain number, units, formatting)
+3. **Display layout** (font sizes, positioning)
+
+**Example: Inventory Counter**
+
+```cpp
+// Original (Parking):
+void displayCarParkStatus(String numberString) {
+  display.setTextAlignment(TEXT_ALIGN_LEFT);
+  display.setFont(ArialMT_Plain_16);
+  display.drawString(0, 0, "PL. LIBRES :");
+
+  display.setTextAlignment(TEXT_ALIGN_CENTER);
+  display.setFont(ArialMT_Plain_24);
+  display.drawString(64, 32, numberString);
+}
+
+// Customized (Stock Level):
+void displayStockLevel(String numberString) {
+  display.setTextAlignment(TEXT_ALIGN_LEFT);
+  display.setFont(ArialMT_Plain_16);
+  display.drawString(0, 0, "STOCK:");
+
+  display.setTextAlignment(TEXT_ALIGN_CENTER);
+  display.setFont(ArialMT_Plain_24);
+  display.drawString(64, 32, numberString + " units");
+}
+```
+
+**Example: Queue Length**
+```cpp
+void displayQueueLength(String numberString) {
+  display.setTextAlignment(TEXT_ALIGN_CENTER);
+  display.setFont(ArialMT_Plain_16);
+  display.drawString(64, 0, "WAITING:");
+
+  display.setFont(ArialMT_Plain_24);
+  display.drawString(64, 24, numberString);
+
+  display.setFont(ArialMT_Plain_10);
+  display.drawString(64, 52, "people in queue");
+}
+```
+
+### Protocol Remains the Same
+
+**Important:** Regardless of your use case, the **LoRaWAN payload protocol stays the same**:
+
+- **Binary State**: Send 1 byte (0x01-0xFF) → Firmware interprets as state
+- **Numeric Counter**: Send ASCII digits (e.g., `3234` for "24") → Firmware displays number
+
+**Only the display logic changes** - the LoRaWAN communication layer is reusable!
+
+### Integration Examples
+
+**Backend Integration** (Any Platform):
+```python
+# Binary state example (room occupancy)
+def send_room_status(dev_eui, is_occupied):
+    payload = b'\x02' if is_occupied else b'\x01'
+    send_lorawan_downlink(dev_eui, fport=1, payload=payload)
+
+# Numeric counter example (stock level)
+def send_stock_level(dev_eui, count):
+    payload = str(count).encode('ascii')  # 24 → b'24' → 0x3234
+    send_lorawan_downlink(dev_eui, fport=1, payload=payload)
 ```
 
 ---
