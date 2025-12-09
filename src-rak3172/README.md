@@ -90,6 +90,34 @@ The ILI9341 version takes advantage of the larger, color display:
 | Storage | ESP32 Preferences (NVS) | Static RAM (volatile) |
 | Power | USB-C / Battery | 3.3V power supply |
 
+## Critical Configuration
+
+### RF Switch Setup ⚠️
+
+The RAK3172 **requires proper RF switch configuration** to transmit/receive. The code includes:
+
+```cpp
+// RF switch pins for RAK3172
+static const uint32_t rfswitch_pins[] = {PB8, PC13, ...};
+static const Module::RfSwitchMode_t rfswitch_table[] = {
+  {STM32WLx::MODE_IDLE,  {LOW,  LOW}},
+  {STM32WLx::MODE_RX,    {HIGH, LOW}},
+  {STM32WLx::MODE_TX_HP, {LOW,  HIGH}},  // RAK3172 uses HP only
+  END_OF_MODE_TABLE,
+};
+radio.setRfSwitchTable(rfswitch_pins, rfswitch_table);
+```
+
+**Without this configuration, the radio will not work!** The RF switch controls which internal path (TX/RX) is active.
+
+### Current Limiting
+
+The code sets over-current protection to 140mA to ensure full power transmission:
+
+```cpp
+radio.setCurrentLimit(140);  // Required for full 14 dBm output
+```
+
 ## Storage Notes
 
 ⚠️ **Important:** The RAK3172 version uses **volatile RAM** for session storage. This means:

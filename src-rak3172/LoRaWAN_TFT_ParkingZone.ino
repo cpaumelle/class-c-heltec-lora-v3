@@ -157,6 +157,10 @@ void setup() {
   Serial.println(F("\n=== LoRaWAN Class C Demo ==="));
   Serial.print(F("Boot: ")); Serial.println(++bootCount);
 
+  // Configure RF switch before radio initialization (CRITICAL for RAK3172)
+  Serial.println(F("Configuring RF switch..."));
+  radio.setRfSwitchTable(rfswitch_pins, rfswitch_table);
+
   int16_t state = radio.begin();
   debugWithDisplay(state != RADIOLIB_ERR_NONE, "Radio failed", state, true);
 
@@ -164,6 +168,11 @@ void setup() {
   Serial.println(F("Configuring radio..."));
   Serial.println(F("  - Output power: 14 dBm"));
   radio.setOutputPower(14);
+
+  // Set over current protection for full power transmission
+  Serial.println(F("  - Current limit: 140 mA"));
+  state = radio.setCurrentLimit(140);
+  debugWithDisplay(state == RADIOLIB_ERR_INVALID_CURRENT_LIMIT, "Invalid current limit", state, true);
 
   Serial.println(F("✓ Radio configured and ready"));
   displayText("Radio OK", "Initializing...");

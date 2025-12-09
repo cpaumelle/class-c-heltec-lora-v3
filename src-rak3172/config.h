@@ -9,6 +9,22 @@
 // The STM32WLx module handles the internal connections automatically
 STM32WLx radio = new STM32WLx_Module();
 
+// RAK3172 RF switch configuration
+// Based on https://github.com/jgromes/RadioLib/discussions/863
+// RAK3172 uses PB8 (RF_SW_CTRL1) and PC13 (RF_SW_CTRL2)
+// Note: RAK3172 uses RFO_HP (high power output), no LP support
+static const uint32_t rfswitch_pins[] = {
+  PB8,   // RF_SW_CTRL1
+  PC13,  // RF_SW_CTRL2
+  RADIOLIB_NC, RADIOLIB_NC, RADIOLIB_NC
+};
+static const Module::RfSwitchMode_t rfswitch_table[] = {
+  {STM32WLx::MODE_IDLE,  {LOW,  LOW}},
+  {STM32WLx::MODE_RX,    {HIGH, LOW}},
+  {STM32WLx::MODE_TX_HP, {LOW,  HIGH}},  // RAK3172 uses HP only
+  END_OF_MODE_TABLE,
+};
+
 // how often to send an uplink - consider legal & FUP constraints - see notes
 const uint32_t uplinkIntervalSeconds = 1UL * 60UL;    // minutes x seconds
 
