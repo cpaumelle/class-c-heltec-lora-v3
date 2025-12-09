@@ -14,7 +14,7 @@ Preferences store;
 #define OLED_ADDR 0x3C
 #define Vext 36
 
-SSD1306Wire display(OLED_ADDR, OLED_SCL, OLED_SDA); // Note: Swapped SCL/SDA order in constructor for common library use
+SSD1306Wire display(OLED_ADDR, OLED_SDA, OLED_SCL);
 
 RTC_DATA_ATTR uint8_t LWsession[RADIOLIB_LORAWAN_SESSION_BUF_SIZE];
 RTC_DATA_ATTR uint16_t bootCount = 0;
