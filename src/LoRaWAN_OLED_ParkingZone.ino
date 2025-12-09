@@ -36,7 +36,7 @@ void displayCarParkStatus(String numberString) {
 
   // Line 1: Fixed French Header
   display.setFont(ArialMT_Plain_10);
-  display.drawString(64, 5, "PL. LIBRES :");
+  display.drawString(64, 5, "PLACES LIBRES:");
 
   // Line 2: The actual number - Largest possible font (36pt)
   display.setFont(ArialMT_Plain_24);
@@ -45,7 +45,7 @@ void displayCarParkStatus(String numberString) {
 
   display.display();
   // Update internal tracking
-  currentStatus = "PL. LIBRES : " + numberString;
+  currentStatus = "PLACES LIBRES: " + numberString;
   Serial.print(F("Display updated: ")); Serial.println(currentStatus);
 }
 
